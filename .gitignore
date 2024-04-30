@@ -1,9 +1,7 @@
-<<<<<<< HEAD
-=======
 # local files
 vit/MNIST_data/
+.idea
 
->>>>>>> c75b67b (upd. first commit)
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

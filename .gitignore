@@ -1,7 +1,7 @@
 # local files
 vit/MNIST_data/
 .idea
-
+vit/__pycache__/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

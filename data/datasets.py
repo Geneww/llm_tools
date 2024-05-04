@@ -40,10 +40,10 @@ transform = transforms.Compose([
 ])
 
 # 下载训练集
-train_set = datasets.MNIST('./MNIST_data/', download=True, train=True, transform=transform)
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True)
+train_set = datasets.MNIST('/Users/gene/project/tools/llm_tools/data/MNIST_data/', download=True, train=True, transform=transform)
+mnist_train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True)
 
 # 下载测试集
-test_set = datasets.MNIST('./MNIST_data/', download=True, train=False, transform=transform)
-test_loader = torch.utils.data.DataLoader(test_set, batch_size=64, shuffle=False)
+test_set = datasets.MNIST('/Users/gene/project/tools/llm_tools/data/MNIST_data/', download=True, train=False, transform=transform)
+mnist_test_loader = torch.utils.data.DataLoader(test_set, batch_size=64, shuffle=False)
 

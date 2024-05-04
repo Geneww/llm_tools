@@ -37,3 +37,22 @@ print(cls_token)
 print(ps)
 
 print(1e-1)
+
+
+import torch
+
+# 创建一个示例张量
+input_tensor = torch.tensor([[1, 2], [3, 4], [5, 6]])
+
+# 创建一个索引张量
+index_tensor = torch.tensor([[0, 0], [1, 0], [1, 1]])
+
+# 沿着第一个维度收集数据
+output = torch.gather(input_tensor, 1, index_tensor)
+
+print(output)
+
+a = [0, 1, 2, 3, 4]
+
+print(a[:-1])
+print(a[-1:])

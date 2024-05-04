@@ -78,7 +78,7 @@ class Vit(nn.Module):
 
 
 if __name__ == '__main__':
-    from datasets import train_loader
+    from data.datasets import train_loader
 
     # 224/16 = 14   28/2=14
     vit = Vit((28, 28, 1), num_classes=10, patch_size=7, embedding_dim=4*4*1, n_head=4)

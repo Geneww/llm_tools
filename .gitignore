@@ -1,5 +1,5 @@
 # local files
-vit/MNIST_data/
+data/MNIST_data/
 .idea
 vit/__pycache__/
 # Byte-compiled / optimized / DLL files

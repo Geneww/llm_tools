@@ -48,12 +48,10 @@ class ScaledDotProductAttention(nn.Module):
         # batch_size个 tgt_len * tgt_len的mask矩阵
         # attn_shape = [seq.size(0), seq.size(1), seq.size(2)]
         attn_shape = seq.shape
-        print("attn_shape: ", attn_shape)
         # np.triu 是生成一个 upper triangular matrix 上三角矩阵，k是相对于主对角线的偏移量
         # k=1意为不包含主对角线（从主对角线向上偏移1开始）
         subsequence_mask = np.triu(np.ones(attn_shape), k=1)
         subsequence_mask = torch.from_numpy(subsequence_mask).byte()  # 因为只有0、1所以用byte节省内存
-        print("subsequence_mask: ", subsequence_mask.shape)
         return subsequence_mask == 1  # return: [batch_size, n_head, tgt_len, tgt_len]
 
     def forward(self, q, k, v, mask=False):
@@ -169,19 +167,16 @@ class TransformerDecoderLayer(nn.Module):
         self.feed_forward = FeedForward(d_model, dim_feedforward, activation)
         self.add_norm_3 = AddNorm(d_model, dropout, layer_norm_eps)
 
-    def forward(self, x, encoder_out):
+    def forward(self, x, encoder_out=None):
         out = self.mask_attention(x, x, x, True)
-        print("mask_attention_out: ", out.shape)
         norm_out = self.add_norm_1(x, out)
-        print("norm_out_1: ", norm_out.shape)
-        out = self.attention(encoder_out, encoder_out, norm_out)
-        print("attention_out: ", out.shape)
+        if encoder_out is not None:
+            out = self.attention(encoder_out, encoder_out, norm_out)
+        else:
+            out = self.attention(norm_out, norm_out, norm_out)
         norm_out = self.add_norm_2(norm_out, out)
-        print("norm_out_2: ", norm_out.shape)
         out = self.feed_forward(norm_out)
-        print("feed_out: ", out.shape)
         norm_out = self.add_norm_3(norm_out, out)
-        print("norm_out_3: ", norm_out.shape)
         return norm_out
 
 
@@ -190,7 +185,7 @@ class TransformerDecoder(nn.Module):
         super(TransformerDecoder, self).__init__()
         self.layers = nn.ModuleList([copy.deepcopy(decoder_layer) for _ in range(num_layers)])
 
-    def forward(self, x, encoder_out):
+    def forward(self, x, encoder_out=None):
         for net in self.layers:
             x = net(x, encoder_out)
         return x

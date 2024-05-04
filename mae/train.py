@@ -95,15 +95,14 @@ def get_args():
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--device', type=str, default='0', help='devices ie. 0,1,2')
     parser.add_argument('--images_size', type=tuple, default=(28, 28, 1))
-    parser.add_argument('--encoder_num', type=int, default=24, help='classes type')
-    parser.add_argument('--decoder_number', type=int, default=8, help='classes type')
+    parser.add_argument('--encoder_num', type=int, default=2, help='encoder number')
+    parser.add_argument('--decoder_number', type=int, default=2, help='decoder number')
     parser.add_argument('--patch_size', type=int, default=7, help='The patch size')
-    parser.add_argument('--embedding_dim', type=int, default=16, help='embedding dim ie. patch number **2')
+    parser.add_argument('--embedding_dim', type=int, default=1024, help='embedding dim ie. patch number **2')
     parser.add_argument('--decoder_embedding_dim', type=int, default=512, help='embedding dim ie. patch number **2')
     parser.add_argument('--masking_ratio', type=float, default=0.75, help='mask rate')
     parser.add_argument('--num_heads', type=int, default=16, help='multi head number')
     parser.add_argument('--decoder_num_heads', type=int, default=16, help='multi head number')
-    parser.add_argument('--num_encoders', type=int, default=4, help='encoder layers number')
 
     # 解析命令行参数
     args = parser.parse_args()

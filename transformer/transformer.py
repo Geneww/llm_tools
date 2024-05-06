@@ -20,8 +20,8 @@ class PositionEncoder(nn.Module):
         # 开始位置编码部分,先生成一个max_token * d_model 的矩阵，即1000 * 512
         # 1000是一个句子中最多的token数，512是一个token用多长的向量来表示，1000*512这个矩阵用于表示一个句子的信息
         self.pe = torch.zeros(1, max_token, d_model)
-        pos = torch.arange(0, max_token, dtype=torch.float).unsqueeze(1)  # pos：[max_len,1],即[5000,1]
-        # 先把括号内的分式求出来,pos是[5000,1],分母是[256],通过广播机制相乘后是[5000,256]
+        pos = torch.arange(0, max_token, dtype=torch.float).unsqueeze(1)  # pos：[max_len,1],即[1000,1]
+        # 先把括号内的分式求出来,pos是[1000,1],分母是[256],通过广播机制相乘后是[1000,256]
         div_term = pos / pow(10000.0, torch.arange(0, d_model, 2).float() / d_model)
         # 再取正余弦
         self.pe[:, :, 0::2] = torch.sin(div_term)
@@ -31,7 +31,7 @@ class PositionEncoder(nn.Module):
 
     def forward(self, x):
         '''x: [batch_size, seq_len, d_model]'''
-        # 5000是我们预定义的最大的seq_len，就是说我们把最多的情况pe都算好了，用的时候用多少就取多少
+        # 1000是我们预定义的最大的seq_len，就是说我们把最多的情况pe都算好了，用的时候用多少就取多少
         x = x + self.pe[:, :x.size(1), :]
         return self.dropout(x)  # return: [batch_size, seq_len, d_model], 和输入的形状相同
 

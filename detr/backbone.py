@@ -20,9 +20,7 @@ from torch import nn
 from torchvision.models._utils import IntermediateLayerGetter
 from typing import Dict, List
 
-from util.misc import NestedTensor, is_main_process
-
-from .position_encoding import build_position_encoding
+from position_encoding import NestedTensor, build_position_encoding
 
 
 class FrozenBatchNorm2d(torch.nn.Module):
@@ -91,13 +89,13 @@ class BackboneBase(nn.Module):
 
 class Backbone(BackboneBase):
     """ResNet backbone with frozen BatchNorm."""
+
     def __init__(self, name: str,
                  train_backbone: bool,
                  return_interm_layers: bool,
                  dilation: bool):
         backbone = getattr(torchvision.models, name)(
-            replace_stride_with_dilation=[False, False, dilation],
-            pretrained=is_main_process(), norm_layer=FrozenBatchNorm2d)
+            replace_stride_with_dilation=[False, False, dilation], norm_layer=FrozenBatchNorm2d)
         num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
@@ -126,3 +124,40 @@ def build_backbone(args):
     model = Joiner(backbone, position_embedding)
     model.num_channels = backbone.num_channels
     return model
+
+
+if __name__ == '__main__':
+    import argparse
+
+
+    def get_args_parser():
+        parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
+        parser.add_argument('--hidden_dim', default=256, type=int,
+                            help="Size of the embeddings (dimension of the transformer)")
+        parser.add_argument('--position_embedding', default='sine', type=str, choices=('sine', 'learned'),
+                            help="Type of positional embedding to use on top of the image features")
+
+        # backbone
+        # * Backbone
+        parser.add_argument('--lr_backbone', default=1e-5, type=float)
+        parser.add_argument('--backbone', default='resnet18', type=str,
+                            help="Name of the convolutional backbone to use")
+        parser.add_argument('--dilation', action='store_true',
+                            help="If true, we replace stride with dilation in the last convolutional block (DC5)")
+
+        parser.add_argument('--masks', action='store_true',
+                            help="Train segmentation head if the flag is provided")
+
+        return parser
+
+
+    arg = get_args_parser().parse_args()
+    model = build_backbone(arg)
+    images = torch.randn(1, 3, 224, 224)
+    mask = torch.zeros(1, 224, 224, dtype=torch.bool)
+    input_t = NestedTensor(images, mask)
+    out, pos = model(input_t)
+    for i, j in zip(out, pos):
+        print(i.tensors.shape)
+        print(i.mask.shape)
+        print(j.shape)

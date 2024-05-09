@@ -620,3 +620,11 @@ class SwinTransformer(nn.Module):
         flops += self.num_features * self.patches_resolution[0] * self.patches_resolution[1] // (2 ** self.num_layers)
         flops += self.num_features * self.num_classes
         return flops
+
+
+if __name__ == '__main__':
+    swin = SwinTransformer()
+    images = torch.ones((1, 3, 224, 224))
+    out = swin(images)
+    print(swin.flops())
+    print(out.shape)

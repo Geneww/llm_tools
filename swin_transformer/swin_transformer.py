@@ -231,18 +231,20 @@ class SwinTransformerBlock(nn.Module):
             # calculate attention mask for SW-MSA
             H, W = self.input_resolution
             img_mask = torch.zeros((1, H, W, 1))  # 1 H W 1
+            print(img_mask.shape)
             h_slices = (slice(0, -self.window_size),
                         slice(-self.window_size, -self.shift_size),
                         slice(-self.shift_size, None))
             w_slices = (slice(0, -self.window_size),
                         slice(-self.window_size, -self.shift_size),
                         slice(-self.shift_size, None))
+            print(h_slices)
+            print(w_slices)
             cnt = 0
             for h in h_slices:
                 for w in w_slices:
                     img_mask[:, h, w, :] = cnt
                     cnt += 1
-
             mask_windows = window_partition(img_mask, self.window_size)  # nW, window_size, window_size, 1
             mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
             attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
@@ -261,11 +263,14 @@ class SwinTransformerBlock(nn.Module):
         shortcut = x
         x = self.norm1(x)
         x = x.view(B, H, W, C)
-
+        print("qqqqqq")
         # cyclic shift
         if self.shift_size > 0:
             if not self.fused_window_process:
+                print("x: ", x.shape)
+                print("self.shift_size: ", self.shift_size)
                 shifted_x = torch.roll(x, shifts=(-self.shift_size, -self.shift_size), dims=(1, 2))
+                print("shifted_x: ", shifted_x.shape)
                 # partition windows
                 x_windows = window_partition(shifted_x, self.window_size)  # nW*B, window_size, window_size, C
             else:
@@ -287,6 +292,7 @@ class SwinTransformerBlock(nn.Module):
         if self.shift_size > 0:
             if not self.fused_window_process:
                 shifted_x = window_reverse(attn_windows, self.window_size, H, W)  # B H' W' C
+
                 x = torch.roll(shifted_x, shifts=(self.shift_size, self.shift_size), dims=(1, 2))
             else:
                 x = WindowProcessReverse.apply(attn_windows, B, H, W, C, self.shift_size, self.window_size)

@@ -28,7 +28,7 @@ def window_partition(x, window_size):
 
 window_size = 7
 shift_size = 3
-H, W = 14, 14
+H, W = 28, 28
 img_mask = torch.zeros((1, H, W, 1))  # 1 H W 1
 h_slices = (slice(0, -window_size),
             slice(-window_size, -shift_size),
@@ -47,7 +47,7 @@ mask_windows = mask_windows.view(-1, window_size * window_size)
 
 attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
 attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
-
+print(attn_mask)
 plt.matshow(img_mask[0, :, :, 0].numpy())
 plt.matshow(attn_mask[0].numpy())
 plt.matshow(attn_mask[1].numpy())

@@ -88,6 +88,7 @@ class SwinTransformerBlock(nn.Module):
         self.mlp = nn.Sequential(
             nn.Linear(in_dim, mlp_hidden_dim),
             act_layer(),
+            nn.Dropout(dropout),
             nn.Linear(mlp_hidden_dim, in_dim),
             nn.Dropout(dropout)
         )
@@ -109,15 +110,14 @@ class SwinTransformerBlock(nn.Module):
 
     def forward(self, x):
         """x: batch, sql_len, channels"""
-        h, w = self.input_resolution
-        n, l, c = x.shape
+        h, w = self.input_resolution  # [56, 56]
+        n, l, c = x.shape  # [batch, 3136, 96]
         assert l == h * w, "input feature has wrong size"
-        shortcut = x
 
-        # layer norm
+        shortcut = x
+        # layer norm 1
         x = self.layer_norm_1(x)  # [batch, 3136, 96]
         x = x.view(n, h, w, c)  # [batch, 56, 56, 96]
-        print(x.shape)
 
         # cyclic shift
         if self.shift_size > 0:

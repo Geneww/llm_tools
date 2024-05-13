@@ -149,6 +149,10 @@ class WindowAttention(nn.Module):
         attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
+            print(111111111)
+            print(mask.shape)
+            print(attn.shape)
+
             nW = mask.shape[0]
             attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, N, N)
@@ -231,15 +235,12 @@ class SwinTransformerBlock(nn.Module):
             # calculate attention mask for SW-MSA
             H, W = self.input_resolution
             img_mask = torch.zeros((1, H, W, 1))  # 1 H W 1
-            print(img_mask.shape)
             h_slices = (slice(0, -self.window_size),
                         slice(-self.window_size, -self.shift_size),
                         slice(-self.shift_size, None))
             w_slices = (slice(0, -self.window_size),
                         slice(-self.window_size, -self.shift_size),
                         slice(-self.shift_size, None))
-            print(h_slices)
-            print(w_slices)
             cnt = 0
             for h in h_slices:
                 for w in w_slices:
@@ -263,14 +264,10 @@ class SwinTransformerBlock(nn.Module):
         shortcut = x
         x = self.norm1(x)
         x = x.view(B, H, W, C)
-        print("qqqqqq")
         # cyclic shift
         if self.shift_size > 0:
             if not self.fused_window_process:
-                print("x: ", x.shape)
-                print("self.shift_size: ", self.shift_size)
                 shifted_x = torch.roll(x, shifts=(-self.shift_size, -self.shift_size), dims=(1, 2))
-                print("shifted_x: ", shifted_x.shape)
                 # partition windows
                 x_windows = window_partition(shifted_x, self.window_size)  # nW*B, window_size, window_size, C
             else:
@@ -607,6 +604,7 @@ class SwinTransformer(nn.Module):
 
         for layer in self.layers:
             x = layer(x)
+            print(x.shape)
 
         x = self.norm(x)  # B L C
         x = self.avgpool(x.transpose(1, 2))  # B C 1
@@ -630,7 +628,7 @@ class SwinTransformer(nn.Module):
 
 if __name__ == '__main__':
     swin = SwinTransformer()
-    images = torch.ones((1, 3, 224, 224))
+    images = torch.ones((2, 3, 224, 224))
     out = swin(images)
     print(swin.flops())
     print(out.shape)

@@ -1,7 +1,10 @@
 # local files
 data/MNIST_data/
+data/MNIST/
 .idea
 vit/__pycache__/
+detr/weights/*.pth
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

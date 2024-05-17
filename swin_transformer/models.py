@@ -99,8 +99,6 @@ class WindowAttention(nn.Module):
         relative_position_bias = self.relative_position_bias_table[self.relative_position_index.view(-1)].view(
             self.window_size * self.window_size, self.window_size * self.window_size, -1)  # [49, 49, n_head]
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # [n_head, 49, 49]
-        print(score.shape, relative_position_bias.unsqueeze(0).shape)
-
         score = score + relative_position_bias.unsqueeze(0)
         # mask
         if mask is not None:
@@ -303,14 +301,12 @@ class BasicLayer(nn.Module):
 class SwinTransformer(nn.Module):
     def __init__(self, img_size=(224, 224, 3), patch_size=4, num_classes=1000,
                  embed_dim=96, depths=[2, 2, 6, 2], num_heads=[3, 6, 12, 24],
-                 window_size=7, mlp_ratio=4., norm_layer=nn.LayerNorm, ape=False, patch_norm=True):
+                 window_size=7, mlp_ratio=4., norm_layer=nn.LayerNorm):
         super().__init__()
 
         self.num_classes = num_classes
         self.num_layers = len(depths)
         self.embed_dim = embed_dim
-        self.ape = ape
-        self.patch_norm = patch_norm
         self.num_features = int(embed_dim * 2 ** (self.num_layers - 1))
         self.mlp_ratio = mlp_ratio
 

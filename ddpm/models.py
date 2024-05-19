@@ -4,145 +4,154 @@
 @Author:      Gene
 @Software:    PyCharm
 @Time:        05月 17, 2024
-@Description: Variational Autoencoder
+@Description: DDPM
 """
-from __future__ import print_function
-import argparse
+import os
+import sys
+from typing import Tuple, Optional
+
 import torch
-import torch.utils.data
-from torch import nn, optim
-from torch.nn import functional as F
-from torchvision import datasets, transforms
-from torchvision.utils import save_image
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, Dataset
+from torchvision import datasets, transforms, models
 
-parser = argparse.ArgumentParser(description='VAE MNIST Example')
-parser.add_argument('--batch-size', type=int, default=128, metavar='N',
-                    help='input batch size for training (default: 128)')
-parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                    help='number of epochs to train (default: 10)')
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
-parser.add_argument('--no-mps', action='store_true', default=False,
-                    help='disables macOS GPU training')
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                    help='how many batches to wait before logging training status')
-args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
-use_mps = not args.no_mps and torch.backends.mps.is_available()
-
-torch.manual_seed(args.seed)
-
-if args.cuda:
-    device = torch.device("cuda")
-elif use_mps:
-    device = torch.device("mps")
-else:
-    device = torch.device("cpu")
-
-kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=True, download=True,
-                   transform=transforms.ToTensor()),
-    batch_size=args.batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=False, transform=transforms.ToTensor()),
-    batch_size=args.batch_size, shuffle=False, **kwargs)
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from tqdm import tqdm
 
 
-class VAE(nn.Module):
-    def __init__(self):
-        super(VAE, self).__init__()
-
-        self.fc1 = nn.Linear(784, 400)
-        self.fc21 = nn.Linear(400, 20)
-        self.fc22 = nn.Linear(400, 20)
-        self.fc3 = nn.Linear(20, 400)
-        self.fc4 = nn.Linear(400, 784)
-
-    def encode(self, x):
-        h1 = F.relu(self.fc1(x))
-        return self.fc21(h1), self.fc22(h1)
-
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-
-    def decode(self, z):
-        h3 = F.relu(self.fc3(z))
-        return torch.sigmoid(self.fc4(h3))
-
-    def forward(self, x):
-        mu, logvar = self.encode(x.view(-1, 784))
-        z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
+def gather_(consts, t):
+    """
+    用于从一个张量consts中根据另一个张量t作为索引  按照指定维度进行取值，并且reshape成一个四维的张量
+    :param consts:
+    :param t:
+    :return:
+    """
+    return consts.gather(-1, t).reshape(-1, 1, 1, 1)
 
 
-model = VAE().to(device)
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+class DenoiseDiffusion:
+    def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
+        super().__init__()
+        self.eps_model = eps_model
+        self.beta = torch.linspace(0.0001, 0.02, n_steps).to(device)
+        self.alpha = 1. - self.beta
+        self.alpha_bar = torch.cumprod(self.alpha, dim=0)
+        self.n_steps = n_steps
+        self.sigma2 = self.beta
+
+    def q_xt_x0(self, x0: torch.Tensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        mean = gather_(self.alpha_bar, t) ** 0.5 * x0
+        var = 1 - gather_(self.alpha_bar, t)
+        return mean, var
+
+    def q_sample(self, x0: torch.Tensor, t: torch.Tensor, eps: Optional[torch.Tensor] = None):
+        if eps is None:
+            eps = torch.randn_like(x0)
+        mean, var = self.q_xt_x0(x0, t)
+        return mean + (var ** 0.5) * eps
+
+    def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
+        eps_theta = self.eps_model(xt, t)
+        alpha_bar = gather_(self.alpha_bar, t)
+        alpha = gather_(self.alpha, t)
+        eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
+        mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
+        var = gather_(self.sigma2, t)
+        eps = torch.randn(xt.shape, device=xt.device)
+        return mean + (var ** .5) * eps
+
+    def loss(self, x0: torch.Tensor, noise: Optional[torch.Tensor] = None):
+        batch_size = x0.shape[0]
+        t = torch.randint(0, self.n_steps, (batch_size,), device=x0.device, dtype=torch.long)
+        if noise is None:
+            noise = torch.randn_like(x0)
+        xt = self.q_sample(x0, t, eps=noise)
+        eps_theta = self.eps_model(xt, t)
+        return F.mse_loss(noise, eps_theta)
 
 
-# Reconstruction + KL divergence losses summed over all elements and batch
-def loss_function(recon_x, x, mu, logvar):
-    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
+class Train:
+    def __init__(self, model):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        self.model = model.to(self.device)
 
-    return BCE + KLD
+        # gen samples
+        self.n_samples = 16
+        self.images_size = 32
+        self.n_steps = 1000
+        self.batch_size = 64
+        self.lr = 0.002
+        self.step_size = 10
+        self.gamma = 0.8
 
+        self.diffusion = DenoiseDiffusion(
+            eps_model=self.model,
+            n_steps=self.n_steps,
+            device=self.device
+        )
 
-def train(epoch):
-    model.train()
-    train_loss = 0
-    for batch_idx, (data, _) in enumerate(train_loader):
-        data = data.to(device)
-        optimizer.zero_grad()
-        recon_batch, mu, logvar = model(data)
-        loss = loss_function(recon_batch, data, mu, logvar)
-        loss.backward()
-        train_loss += loss.item()
-        optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                       100. * batch_idx / len(train_loader),
-                       loss.item() / len(data)))
+        # 图像预处理
+        transform = transforms.Compose([
+            transforms.Resize((self.images_size, self.images_size)),  # resize
+            transforms.ToTensor()  # 0~1
+        ])
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(
-        epoch, train_loss / len(train_loader.dataset)))
+        # load dataset
+        self.dataset = datasets.MNIST(root="", train=True, download=False, transform=transform)
+        self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
 
+        # define optimizer
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
-def test(epoch):
-    model.eval()
-    test_loss = 0
-    with torch.no_grad():
-        for i, (data, _) in enumerate(test_loader):
-            data = data.to(device)
-            recon_batch, mu, logvar = model(data)
-            test_loss += loss_function(recon_batch, data, mu, logvar).item()
-            if i == 0:
-                n = min(data.size(0), 8)
-                comparison = torch.cat([data[:n],
-                                        recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
-                save_image(comparison.cpu(),
-                           'results/reconstruction_' + str(epoch) + '.png', nrow=n)
+        # define scheduler
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
 
-    test_loss /= len(test_loader.dataset)
-    print('====> Test set loss: {:.4f}'.format(test_loss))
-
-
-if __name__ == "__main__":
-    for epoch in range(1, args.epochs + 1):
-        train(epoch)
-        test(epoch)
+    def sample(self):
+        # 禁用梯度计算
         with torch.no_grad():
-            sample = torch.randn(64, 20).to(device)
-            sample = model.decode(sample).cpu()
-            save_image(sample.view(64, 1, 28, 28),
-                       'results/sample_' + str(epoch) + '.png')
+            # 生成多个noise
+            x = torch.randn([self.n_samples, 1, self.images_size, self.images_size], device=self.device)
+
+            # 对图像进行去噪
+            for t_ in range(self.n_steps):
+                t = self.n_steps - t_ - 1
+
+                # 在当前时间对图像进行去噪
+                x = self.model.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
+            return x
+
+    def train(self):
+        total_loss = 0
+
+        # 遍历数据集
+        for data, _ in self.dataloader:
+            # reshape
+            data = data.reshape(-1, 1, self.images_size, self.images_size)
+            data = data.to(self.device)
+
+            self.optimizer.zero_grad()
+            loss = self.model.loss(data)
+            loss.backward()
+            self.optimizer.step()
+
+            total_loss += loss.item()
+
+        self.scheduler.step()
+        return total_loss
+
+    def run(self, epochs):
+        for epoch in tqdm(range(epochs), file=sys.stdout):
+            loss = self.train()
+
+            if epoch % 20 == 0:
+                tqdm.write(f"Epoch: {epoch} Loss: {loss}")
+
+
+
+
+    from torchvision.models import resnet18

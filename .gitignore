@@ -1,6 +1,8 @@
 # local files
 data/MNIST_data/
 data/MNIST/
+data/cifar-10-batches-py/
+data/stanford_cars/
 .idea
 vit/__pycache__/
 detr/weights/*.pth

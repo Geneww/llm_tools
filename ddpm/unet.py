@@ -65,7 +65,7 @@ class UpSample(nn.Module):
 
 
 class Unet(nn.Module):
-    def __init__(self, in_channels=3, out_channel=100,  channels=[64, 128, 256, 512, 1024], dropout=0.5):
+    def __init__(self, in_channels=3, out_channel=100, channels=[64, 128, 256, 512, 1024], dropout=0.5):
         super().__init__()
         # encoder
         self.down1 = DownSample(in_channels, channels[0])
@@ -90,20 +90,22 @@ class Unet(nn.Module):
         self.out = nn.Conv2d(channels[0], out_channel, kernel_size=1)
 
     def forward(self, x):
-        e1 = self.down1(x)      # [batch, 64, 112, 112]
-        e2 = self.down2(e1)     # [batch, 128, 56, 56]
-        e3 = self.down3(e2)     # [batch, 256, 28, 28]
-        e4 = self.down4(e3)     # [batch, 512, 14, 14]
+        e1 = self.down1(x)  # [batch, 64, 112, 112]
+        e2 = self.down2(e1)  # [batch, 128, 56, 56]
+        e3 = self.down3(e2)  # [batch, 256, 28, 28]
+        e4 = self.down4(e3)  # [batch, 512, 14, 14]
         e4 = self.dropout4(e4)
-        e5 = self.down5(e4)     # [batch, 1024, 7,  7]
+        e5 = self.down5(e4)  # [batch, 1024, 7,  7]
         f = self.dropout5(e5)
-        d4 = self.up1(f, e4)    # [batch, 512, 14, 14]
-        d3 = self.up2(d4, e3)   # [batch, 256, 28, 28]
-        d2 = self.up3(d3, e2)   # [batch, 128, 56, 56]
-        d1 = self.up4(d2, e1)   # [batch, 64, 112,112]
-        d0 = self.up(d1)        # [batch, 64, 224,224]
-        out = self.out(d0)      # [batch, num_class,224,224]
+        d4 = self.up1(f, e4)  # [batch, 512, 14, 14]
+        d3 = self.up2(d4, e3)  # [batch, 256, 28, 28]
+        d2 = self.up3(d3, e2)  # [batch, 128, 56, 56]
+        d1 = self.up4(d2, e1)  # [batch, 64, 112,112]
+        d0 = self.up(d1)  # [batch, 64, 224,224]
+        out = self.out(d0)  # [batch, num_class,224,224]
         return out
+
+
 
 
 if __name__ == '__main__':

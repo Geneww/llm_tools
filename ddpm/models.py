@@ -75,7 +75,7 @@ class DenoiseDiffusion:
 
 
 class Train:
-    def __init__(self, model):
+    def __init__(self, args):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = model.to(self.device)
@@ -150,8 +150,5 @@ class Train:
 
             if epoch % 20 == 0:
                 tqdm.write(f"Epoch: {epoch} Loss: {loss}")
-
-
-
 
     from torchvision.models import resnet18

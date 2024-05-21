@@ -8,6 +8,7 @@
 """
 import os
 import sys
+import random
 from typing import Tuple, Optional
 
 import torch
@@ -22,6 +23,18 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 
+from fusion_unet import FusionUnet
+
+
+def seed_everything(seed):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+
 
 def gather_(consts, t):
     """
@@ -33,7 +46,7 @@ def gather_(consts, t):
     return consts.gather(-1, t).reshape(-1, 1, 1, 1)
 
 
-class DenoiseDiffusion:
+class DenoiseDiffusion(nn.Module):
     def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
         super().__init__()
         self.eps_model = eps_model
@@ -76,24 +89,17 @@ class DenoiseDiffusion:
 
 class Train:
     def __init__(self, args):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        self.model = model.to(self.device)
+        seed_everything(args.seed)
+        self.device = torch.device(f"{args.device}" if torch.cuda.is_available() else "cpu")
 
         # gen samples
-        self.n_samples = 16
-        self.images_size = 32
-        self.n_steps = 1000
-        self.batch_size = 64
-        self.lr = 0.002
-        self.step_size = 10
-        self.gamma = 0.8
-
-        self.diffusion = DenoiseDiffusion(
-            eps_model=self.model,
-            n_steps=self.n_steps,
-            device=self.device
-        )
+        self.n_samples = args.n_samples
+        self.images_size = args.images_size
+        self.n_steps = args.n_steps
+        self.batch_size = args.batch_size
+        self.lr = args.lr
+        self.step_size = args.step_size
+        self.gamma = args.gamma
 
         # 图像预处理
         transform = transforms.Compose([
@@ -101,12 +107,25 @@ class Train:
             transforms.ToTensor()  # 0~1
         ])
 
+        # define dataloader
         # load dataset
-        self.dataset = datasets.MNIST(root="", train=True, download=False, transform=transform)
+        self.dataset = datasets.MNIST(root=args.mnist_path, train=True, download=False, transform=transform)
         self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
+        for images, _ in self.dataloader:
+            # 'images' will contain the batch of images
+            # 'labels' will contain the corresponding labels
+            break  # Break after the first batch to inspect its shape
+        num_channels = images.shape[1]
+        # define model
+        self.backbone_model = FusionUnet(in_channels=num_channels, out_channels=num_channels).to(self.device)
+        self.diffusion = DenoiseDiffusion(
+            eps_model=self.backbone_model,
+            n_steps=self.n_steps,
+            device=self.device
+        )
 
         # define optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(self.diffusion.parameters(), lr=self.lr)
 
         # define scheduler
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
@@ -122,7 +141,7 @@ class Train:
                 t = self.n_steps - t_ - 1
 
                 # 在当前时间对图像进行去噪
-                x = self.model.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
+                x = self.diffusion.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
             return x
 
     def train(self):
@@ -135,7 +154,7 @@ class Train:
             data = data.to(self.device)
 
             self.optimizer.zero_grad()
-            loss = self.model.loss(data)
+            loss = self.diffusion.loss(data)
             loss.backward()
             self.optimizer.step()
 
@@ -152,3 +171,32 @@ class Train:
                 tqdm.write(f"Epoch: {epoch} Loss: {loss}")
 
     from torchvision.models import resnet18
+
+
+def get_args():
+    import argparse
+    # 创建 ArgumentParser 对象
+    parser = argparse.ArgumentParser(description="train DDPM.")
+
+    # 添加命令行参数
+    parser.add_argument('--mnist_path', type=str, default='/Users/gene/project/tools/llm_tools/data/MNIST_data',
+                        help="MNIST_data path")
+    parser.add_argument('--device', type=str, default='cuda:0', help="ie. cuda:0 cuda:01 cuda:0123")
+    parser.add_argument('--seed', type=int, default=10033, help="random seed")
+    parser.add_argument('--epochs', type=int, default=50, help='epoch')
+    parser.add_argument('--n_samples', type=int, default=16, help='n_samples')
+    parser.add_argument('--lr', type=float, default=2e-3, help='learning rate')
+    parser.add_argument('--images_size', type=int, default=32)
+    parser.add_argument('--n_steps', type=int, default=1000, help='n_steps')
+    parser.add_argument('--batch_size', type=int, default=8, help='The batch size')
+    parser.add_argument('--step_size', type=int, default=10, help='step_size')
+    parser.add_argument('--gamma', type=float, default=0.8, help='gamma rate')
+    # 解析命令行参数
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+    args = get_args()
+    train = Train(args)
+    train.run(args.epochs)

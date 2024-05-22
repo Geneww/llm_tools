@@ -25,9 +25,9 @@ def load_train_mnist_dataset(image_size: tuple, mnist_path: str):
     ]
     data_transform = transforms.Compose(data_transforms)
 
-    train = datasets.MNIST(root=mnist_path, train=True, download=False,
+    train = datasets.MNIST(root=mnist_path, train=True, download=True,
                            transform=data_transform)
-    test = datasets.MNIST(root=mnist_path, train=False, download=False,
+    test = datasets.MNIST(root=mnist_path, train=False, download=True,
                           transform=data_transform)
     return torch.utils.data.ConcatDataset([train, test])
 

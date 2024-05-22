@@ -72,6 +72,7 @@ class DenoiseDiffusion(nn.Module):
         t = torch.randint(0, self.n_steps, (batch_size,), device=x0.device, dtype=torch.long)
         if noise is None:
             noise = torch.randn_like(x0)
+        print(x0.device, t.device)
         xt = self.q_sample(x0, t, eps=noise)
         eps_theta = self.eps_model(xt, t)
         return F.mse_loss(noise, eps_theta)

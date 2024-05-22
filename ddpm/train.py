@@ -129,7 +129,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="train DDPM.")
 
     # 添加命令行参数
-    parser.add_argument('--mnist_path', type=str, default='/Users/gene/project/tools/llm_tools/data/MNIST_data',
+    parser.add_argument('--mnist_path', type=str, default='./data/MNIST_data',
                         help="MNIST_data path")
     parser.add_argument('--best_model_path', type=str, default='./model.pth', help="ie. cuda:0 cuda:01 cuda:0123")
     parser.add_argument('--device', type=str, default='cuda:0', help="ie. cuda:0 cuda:01 cuda:0123")
@@ -151,5 +151,4 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     train = Train(args)
-    x = train.sample()
-    show_tensor_image(x)
+    x = train.run()

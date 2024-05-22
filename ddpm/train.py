@@ -72,6 +72,7 @@ class Train:
         self.model.train()
         running_loss = 0.0
         for step, data in enumerate(tqdm(self.train_dataloader)):
+            print(data[0].shape)
             self.optimizer.zero_grad()
             loss = self.model.loss(data[0].to(self.device))
             loss.backward()
@@ -91,7 +92,7 @@ class Train:
 
     def sample(self):
         # load model
-        state_dict = torch.load(self.best_model_path)
+        state_dict = torch.load(self.best_model_path, map_location=self.device)
         self.model.load_state_dict(state_dict)
         self.model.eval()
         # 禁用梯度计算
@@ -105,6 +106,7 @@ class Train:
 
                 # 在当前时间对图像进行去噪
                 x = self.model.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
+            show_tensor_image(x)
             return x
 
     def run(self):
@@ -132,7 +134,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="train DDPM.")
 
     # 添加命令行参数
-    parser.add_argument('--mnist_path', type=str, default='./data/MNIST_data',
+    parser.add_argument('--mnist_path', type=str, default='../data/MNIST_data',
                         help="MNIST_data path")
     parser.add_argument('--best_model_path', type=str, default='./model.pth', help="ie. cuda:0 cuda:01 cuda:0123")
     parser.add_argument('--device', type=str, default='cuda:0', help="ie. cuda:0 cuda:01 cuda:0123")
@@ -148,6 +150,7 @@ def get_args():
     parser.add_argument('--timesteps', type=int, default=300, help='time step')
     parser.add_argument('--batch_size', type=int, default=1280, help='The batch size')
     # Reduces LR by a factor of 0.1 every 10 epochs
+    parser.add_argument('--optimizer', type=str, default='sgd', help='optimizer')
     parser.add_argument('--step_size', type=int, default=5, help='step_size')
     parser.add_argument('--gamma', type=float, default=0.1, help='gamma rate')
     # 解析命令行参数
@@ -158,4 +161,4 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     train = Train(args)
-    x = train.run()
+    x = train.sample()

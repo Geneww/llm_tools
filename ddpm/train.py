@@ -69,7 +69,7 @@ class Train:
         running_loss = 0.0
         for step, data in enumerate(tqdm(self.train_dataloader)):
             self.optimizer.zero_grad()
-            loss = self.model.loss(data[0])
+            loss = self.model.loss(data[0].to(self.device))
             loss.backward()
             self.optimizer.step()
             running_loss += loss.item()

@@ -82,7 +82,7 @@ class Train:
         with torch.no_grad():
             for data, _ in tqdm(self.val_dataloader):
                 self.optimizer.zero_grad()
-                loss = self.model.loss(data[0])
+                loss = self.model.loss(data[0].to(self.device))
                 running_loss += loss.item()
         return running_loss / len(self.val_dataloader)
 

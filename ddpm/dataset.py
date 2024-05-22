@@ -19,7 +19,7 @@ import numpy as np
 def load_train_mnist_dataset(image_size: tuple, mnist_path: str):
     data_transforms = [
         transforms.Resize(image_size),
-        transforms.RandomHorizontalFlip(),
+        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),  # Scales data into [0,1]
         transforms.Lambda(lambda t: (t * 2) - 1)  # Scale between [-1, 1]
     ]

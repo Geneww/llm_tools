@@ -7,6 +7,12 @@ data/stanford_cars/
 vit/__pycache__/
 detr/weights/*.pth
 
+# model
+*.pth
+*.pt
+*.onnx
+*.engine
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

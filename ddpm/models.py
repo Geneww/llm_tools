@@ -26,16 +26,6 @@ from tqdm import tqdm
 from fusion_unet import FusionUnet
 
 
-def seed_everything(seed):
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-
-
 def gather_(consts, t):
     """
     用于从一个张量consts中根据另一个张量t作为索引  按照指定维度进行取值，并且reshape成一个四维的张量
@@ -112,10 +102,10 @@ class Train:
         self.dataset = datasets.MNIST(root=args.mnist_path, train=True, download=False, transform=transform)
         self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
         for images, _ in self.dataloader:
+            num_channels = images.shape[1]
             # 'images' will contain the batch of images
             # 'labels' will contain the corresponding labels
             break  # Break after the first batch to inspect its shape
-        num_channels = images.shape[1]
         # define model
         self.backbone_model = FusionUnet(in_channels=num_channels, out_channels=num_channels).to(self.device)
         self.diffusion = DenoiseDiffusion(
@@ -146,7 +136,6 @@ class Train:
 
     def train(self):
         total_loss = 0
-
         # 遍历数据集
         for data, _ in self.dataloader:
             # reshape
@@ -183,7 +172,7 @@ def get_args():
                         help="MNIST_data path")
     parser.add_argument('--device', type=str, default='cuda:0', help="ie. cuda:0 cuda:01 cuda:0123")
     parser.add_argument('--seed', type=int, default=10033, help="random seed")
-    parser.add_argument('--epochs', type=int, default=50, help='epoch')
+    parser.add_argument('--epochs', type=int, default=100, help='epoch')
     parser.add_argument('--n_samples', type=int, default=16, help='n_samples')
     parser.add_argument('--lr', type=float, default=2e-3, help='learning rate')
     parser.add_argument('--images_size', type=int, default=32)

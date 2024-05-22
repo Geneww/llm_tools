@@ -87,6 +87,10 @@ class Train:
         return running_loss / len(self.val_dataloader)
 
     def sample(self):
+        # load model
+        state_dict = torch.load(self.best_model_path)
+        self.model.load_state_dict(state_dict)
+        self.model.eval()
         # 禁用梯度计算
         with torch.no_grad():
             # 生成多个noise
@@ -149,4 +153,3 @@ if __name__ == '__main__':
     train = Train(args)
     x = train.sample()
     show_tensor_image(x)
-

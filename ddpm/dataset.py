@@ -19,15 +19,15 @@ import numpy as np
 def load_train_mnist_dataset(image_size: tuple, mnist_path: str):
     data_transforms = [
         transforms.Resize(image_size),
-        # transforms.RandomHorizontalFlip(),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),  # Scales data into [0,1]
         transforms.Lambda(lambda t: (t * 2) - 1)  # Scale between [-1, 1]
     ]
     data_transform = transforms.Compose(data_transforms)
 
-    train = datasets.MNIST(root=mnist_path, train=True, download=True,
+    train = datasets.CIFAR10(root=mnist_path, train=True, download=True,
                            transform=data_transform)
-    test = datasets.MNIST(root=mnist_path, train=False, download=True,
+    test = datasets.CIFAR10(root=mnist_path, train=False, download=True,
                           transform=data_transform)
     return torch.utils.data.ConcatDataset([train, test])
 
@@ -39,7 +39,7 @@ def load_val_mnist_dataset(image_size: tuple, mnist_path: str):
         transforms.Lambda(lambda t: (t * 2) - 1)  # Scale between [-1, 1]
     ]
     data_transform = transforms.Compose(data_transforms)
-    test = datasets.MNIST(root=mnist_path, train=False, download=False,
+    test = datasets.CIFAR10(root=mnist_path, train=False, download=False,
                           transform=data_transform)
     return test
 
@@ -47,7 +47,7 @@ def load_val_mnist_dataset(image_size: tuple, mnist_path: str):
 def show_tensor_image(images):
     # 数据集和数据加载器
     def remove_invalid_values(tensor):
-        array = tensor.numpy()
+        array = tensor.detach().numpy()
         # Replace NaN with 0.0, positive infinity with 255, negative infinity with 0
         array = np.nan_to_num(array, nan=0.0, posinf=255, neginf=0)
         # Clamp the values to be within the valid uint8 range

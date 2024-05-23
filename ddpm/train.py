@@ -61,9 +61,10 @@ class Train:
         if args.optimizer == "adam":
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)  # adam
         # define scheduler # Reduces LR by a factor of 0.1 every 10 epochs
-        #self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
+        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
         # Reduces LR by a factor of 0.1 when [10] epochs validation loss never reduce.
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', factor=self.gamma, patience=self.step_size)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', factor=self.gamma,
+                                                                    patience=self.step_size)
 
         # save
         self.best_model_path = args.best_model_path
@@ -125,7 +126,8 @@ class Train:
                 best_val_loss = val_loss
                 torch.save(self.model.state_dict(), self.best_model_path)
                 print(f'Saved best model with val loss: {best_val_loss:.4f}')
-            print(f'Epoch {epoch + 1}/{self.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Learning Rate: {current_lr} | Best Loss: {best_val_loss:.4f}')
+            print(
+                f'Epoch {epoch + 1}/{self.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Learning Rate: {current_lr} | Best Loss: {best_val_loss:.4f}')
 
 
 def get_args():
@@ -134,12 +136,12 @@ def get_args():
     parser = argparse.ArgumentParser(description="train DDPM.")
 
     # 添加命令行参数
-    parser.add_argument('--mnist_path', type=str, default='../data/MNIST_data',
+    parser.add_argument('--mnist_path', type=str, default='../data',
                         help="MNIST_data path")
     parser.add_argument('--best_model_path', type=str, default='./model.pth', help="ie. cuda:0 cuda:01 cuda:0123")
     parser.add_argument('--device', type=str, default='cuda:0', help="ie. cuda:0 cuda:01 cuda:0123")
     parser.add_argument('--seed', type=int, default=10033, help="random seed")
-    parser.add_argument('--im_channel', type=int, default=1, help='image channel. ie. rgb=3 gray=1 default->1')
+    parser.add_argument('--im_channel', type=int, default=3, help='image channel. ie. rgb=3 gray=1 default->1')
     parser.add_argument('--epochs', type=int, default=100, help='epoch')
     parser.add_argument('--n_samples', type=int, default=16, help='test model n_samples')
     #
@@ -148,10 +150,10 @@ def get_args():
     parser.add_argument('--images_size', type=int, default=32)
     # diffusion 300 step forward add noise
     parser.add_argument('--timesteps', type=int, default=300, help='time step')
-    parser.add_argument('--batch_size', type=int, default=1280, help='The batch size')
+    parser.add_argument('--batch_size', type=int, default=256, help='The batch size')
     # Reduces LR by a factor of 0.1 every 10 epochs
     parser.add_argument('--optimizer', type=str, default='sgd', help='optimizer')
-    parser.add_argument('--step_size', type=int, default=5, help='step_size')
+    parser.add_argument('--step_size', type=int, default=10, help='step_size')
     parser.add_argument('--gamma', type=float, default=0.1, help='gamma rate')
     # 解析命令行参数
     args = parser.parse_args()
@@ -161,4 +163,6 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     train = Train(args)
-    x = train.sample()
+    train.run()  # train model
+    # x = train.model.generate((1, 1, 32, 32), 300)
+    # show_tensor_image(x)

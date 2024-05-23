@@ -6,14 +6,27 @@
 @Time:        05月 18, 2024
 @Description:
 """
-
+from typing import Tuple, Any
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 import matplotlib.pyplot as plt
+from PIL import Image
 
 import numpy as np
+
+
+class Mnist(datasets.MNIST):
+    def __init__(self, root, train=True, transform=None, target_transform=None, download=False, number=1):
+        super().__init__(root=root, train=train, transform=transform, target_transform=target_transform,
+                         download=download)
+
+        # If a specific number of samples is requested, select the first 'number' samples
+        assert 0 <= number <= 9, "out of range."
+        index = self.targets == number
+        self.data = self.data[index]
+        self.targets = self.targets[index]
 
 
 def load_train_mnist_dataset(image_size: tuple, mnist_path: str):
@@ -25,10 +38,10 @@ def load_train_mnist_dataset(image_size: tuple, mnist_path: str):
     ]
     data_transform = transforms.Compose(data_transforms)
 
-    train = datasets.CIFAR10(root=mnist_path, train=True, download=True,
+    train = Mnist(root=mnist_path, train=True, download=True,
                            transform=data_transform)
-    test = datasets.CIFAR10(root=mnist_path, train=False, download=True,
-                          transform=data_transform)
+    test = Mnist(root=mnist_path, train=False, download=True,
+                            transform=data_transform)
     return torch.utils.data.ConcatDataset([train, test])
 
 
@@ -39,8 +52,8 @@ def load_val_mnist_dataset(image_size: tuple, mnist_path: str):
         transforms.Lambda(lambda t: (t * 2) - 1)  # Scale between [-1, 1]
     ]
     data_transform = transforms.Compose(data_transforms)
-    test = datasets.CIFAR10(root=mnist_path, train=False, download=False,
-                          transform=data_transform)
+    test = Mnist(root=mnist_path, train=False, download=False,
+                            transform=data_transform)
     return test
 
 
@@ -82,8 +95,9 @@ def show_tensor_image(images):
 
 
 if __name__ == '__main__':
+    # mni = Mnist(root="/Users/gene/project/tools/llm_tools/data")
     img_size = (28, 28)
-    mnist_path = "/Users/gene/project/tools/llm_tools/data/MNIST_data"
+    mnist_path = "/Users/gene/project/tools/llm_tools/data"
     data = load_val_mnist_dataset(img_size, mnist_path)
     dataloader = DataLoader(data, batch_size=32, shuffle=True, drop_last=True)
     for i, data in enumerate(dataloader):

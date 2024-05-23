@@ -73,7 +73,6 @@ class Train:
         self.model.train()
         running_loss = 0.0
         for step, data in enumerate(tqdm(self.train_dataloader)):
-            print(data[0].shape)
             self.optimizer.zero_grad()
             loss = self.model.loss(data[0].to(self.device))
             loss.backward()
@@ -149,7 +148,7 @@ def get_args():
     parser.add_argument('--momentum', type=float, default=0.9, help='sgd learning rate momentum')
     parser.add_argument('--images_size', type=int, default=32)
     # diffusion 300 step forward add noise
-    parser.add_argument('--timesteps', type=int, default=300, help='time step')
+    parser.add_argument('--timesteps', type=int, default=1000, help='time step')
     parser.add_argument('--batch_size', type=int, default=256, help='The batch size')
     # Reduces LR by a factor of 0.1 every 10 epochs
     parser.add_argument('--optimizer', type=str, default='sgd', help='optimizer')
@@ -163,6 +162,6 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     train = Train(args)
-    train.run()  # train model
-    # x = train.model.generate((1, 1, 32, 32), 300)
-    # show_tensor_image(x)
+    # train.run()  # train model
+    x = train.model.generate((1, 3, 32, 32), 1000)
+    show_tensor_image(x)

@@ -18,7 +18,7 @@ from torchvision import datasets, transforms, models
 
 from dataset import load_train_mnist_dataset, load_val_mnist_dataset, show_tensor_image
 from fusion_unet import FusionUnet
-from models import DenoiseDiffusion
+from models import MLPDiffusion
 
 
 def seed_everything(seed):
@@ -50,8 +50,7 @@ class Train:
         self.val_dataloader = DataLoader(val_data, batch_size=self.batch_size, shuffle=False, drop_last=False)
 
         # 2.define model
-        self.model = DenoiseDiffusion(FusionUnet(in_channels=args.im_channel, out_channels=args.im_channel),
-                                      n_steps=args.timesteps, device=self.device).to(self.device)
+        self.model = MLPDiffusion().to(self.device)
 
         # 3.define loss
         self.loss = torch.nn.MSELoss()

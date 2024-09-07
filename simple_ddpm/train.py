@@ -31,6 +31,39 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
 
 
+def show_images(images, title=""):
+    """Shows the provided images as sub-pictures in a square"""
+
+    # Converting images to CPU numpy arrays
+    if type(images) is torch.Tensor:
+        images = images.detach().cpu().numpy()
+
+    # Defining number of rows and columns
+    fig = plt.figure(figsize=(8, 8))
+    rows = int(len(images) ** (1 / 2))
+    cols = round(len(images) / rows)
+
+    # Populating figure with sub-plots
+    idx = 0
+    for r in range(rows):
+        for c in range(cols):
+            fig.add_subplot(rows, cols, idx + 1)
+
+            if idx < len(images):
+                plt.imshow(images[idx][0], cmap="gray")
+                idx += 1
+    fig.suptitle(title, fontsize=30)
+
+    # Showing the figure
+    plt.show()
+
+
+def show_first_batch(loader):
+    for batch in loader:
+        show_images(batch[0], "Images in the first batch")
+        break
+
+
 class Train:
     def __init__(self, args):
         self.device = torch.device(f"{args.device}" if torch.cuda.is_available() else "cpu")
@@ -73,7 +106,11 @@ class Train:
         running_loss = 0.0
         for step, data in enumerate(tqdm(self.train_dataloader)):
             self.optimizer.zero_grad()
-            loss = self.model.loss(data[0].to(self.device))
+            x0 = data[0].to(self.device)
+
+            t = torch.randint(0, self.step_size, (batch_size,), device=x0.device, dtype=torch.long)
+            eta_theta = self.model(x0, t, eta)
+            loss = self.loss(eta, eta_theta)
             loss.backward()
             self.optimizer.step()
             running_loss += loss.item()
@@ -147,7 +184,7 @@ def get_args():
     parser.add_argument('--momentum', type=float, default=0.9, help='sgd learning rate momentum')
     parser.add_argument('--images_size', type=int, default=32)
     # diffusion 300 step forward add noise
-    parser.add_argument('--timesteps', type=int, default=1000, help='time step')
+    parser.add_argument('--timesteps', type=int, default=200, help='time step')
     parser.add_argument('--batch_size', type=int, default=256, help='The batch size')
     # Reduces LR by a factor of 0.1 every 10 epochs
     parser.add_argument('--optimizer', type=str, default='sgd', help='optimizer')

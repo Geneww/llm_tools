@@ -2,6 +2,7 @@
 data/MNIST_data/
 .idea
 vit/__pycache__/
+transformer/__pycache__/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,16 @@
+flask
+flask-restx
+Flask-Script
+Flask-SQLAlchemy
+flask-jwt-extended
+flask-migrate
+pymysql
+requests
+marshmallow
+openai
+#faiss-cpu
+langchain
+flask_apscheduler
+gunicorn
+flask_accepts
+tiktoken

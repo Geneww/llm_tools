@@ -26,7 +26,7 @@ import requests
 url = "http://192.168.124.100:8000/v1/chat/completions"
 # url = "http://192.168.124.100:8000/v1/models"
 data = {
-    "body" : "123"
+    "body": "123"
 }
 res = requests.post(url=url, data=data)
 print(res.text)
@@ -46,20 +46,41 @@ def main():
 
     messages = []
     messages.append({"role": "user", "content": "hello, where is USA"})
-
     # Create a completion with streaming
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",  # Adjust model as needed
         messages=messages,
+        temperature=0.8,
+        top_p=0.7,
         stream=True
     )
 
     # Iterate over the stream of events
     for event in response:
-        if event['choices'][0]['finish_reason'] == 'stop':
-            break
-        print(event['choices'][0]['delta']['content'], end='')
+        # delta = event["choices"][0]["delta"]
+        delta = event.choices[0].delta
+        if delta.content is not None:
+            stream = delta.content
+            print(stream)
+        else:
+            print(delta)
 
 
 if __name__ == '__main__':
-    main()
+    import time
+    # main()
+    timestamp = str(int(time.time()))
+    print(timestamp)
+    from datetime import datetime, timedelta, timezone
+
+    # UNIX 时间戳
+    timestamp = 1725867365
+
+    # 将时间戳转换为 UTC 时间
+    utc_time = datetime.utcfromtimestamp(timestamp)
+
+    # 转换为北京时间 (UTC+8)
+    beijing_time = utc_time + timedelta(hours=8)
+
+    # 打印北京时间
+    print(beijing_time.strftime('%Y-%m-%d %H:%M:%S'))

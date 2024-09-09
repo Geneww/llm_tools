@@ -4,6 +4,7 @@ data/MNIST/
 data/cifar-10-batches-py/
 data/stanford_cars/
 .idea
+transformer/__pycache__/
 vit/__pycache__/
 detr/weights/*.pth
 

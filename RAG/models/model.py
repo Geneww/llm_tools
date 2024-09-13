@@ -24,10 +24,11 @@ class BaseModel(object):
 
 
 class AppsManager(db.Model, BaseModel):
+    """APP管理类"""
     __tablename__ = "app_manager"
-    __table_args__ = (
-        db.Index('', 'app_name'),
-    )
+    # __table_args__ = (
+    #     db.Index('', 'app_id'),
+    # )
     app_id = db.Column(db.String(64), nullable=False)
     app_name = db.Column(db.String(64), nullable=False)
     app_secret = db.Column(db.String(64), nullable=False)
@@ -44,3 +45,13 @@ class AppsManager(db.Model, BaseModel):
         raw_str = app_id + nonce + str(timestamp) + instance.app_secret
         gen_sign = hashlib.md5(raw_str.encode("utf-8")).hexdigest()
         return gen_sign == sign
+
+    @staticmethod
+    def init_record(self):
+        """自动处理"""
+        instance = db.session.query(AppsManager).filter_by(app_id="1001").first()
+        if not instance:
+            instance = AppsManager(app_id="1001", app_name="test_app", app_secret="xxx")
+            db.session.add(instance)
+            db.session.commit()
+        return instance

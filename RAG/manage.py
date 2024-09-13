@@ -17,7 +17,7 @@ app = create_app(env)
 
 manager = Manager(app)
 app.app_context().push()
-manager.add_command("seed_db", SeedCommand())
+manager.add_command("seed_db", SeedCommand)
 
 
 @manager.command

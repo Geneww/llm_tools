@@ -10,8 +10,10 @@
 
 class QueryType:
     """大模型类型"""
-    DOC = "doc"
-    NORMAL = ""
+    DOC = "document"
+    NORMAL = "chat"
+    LINK = "link"
+    REPORT = "report"
 
 
 class ModelItem:

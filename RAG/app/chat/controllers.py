@@ -16,6 +16,7 @@ from flask_restx import Namespace, Resource
 from flask.wrappers import Response
 from flask_accepts import responds, accepts
 
+from common.constants import QueryType
 from common.schema import custom_accepts
 from common.response import json_response, RET
 from app.chat.schema import ChatSchema, CommResp
@@ -23,7 +24,7 @@ from models.model import AppsManager
 
 from app import logger
 
-from services import ChatServices
+from app.chat.services import ChatServices
 
 api = Namespace("completion", description="LLM聊天api")
 
@@ -50,13 +51,40 @@ class Completion(Resource):
             print(req_data)
             ret = AppsManager.verify_sign(req_data["app_id"], req_data["nonce"], req_data["timestamp"],
                                           req_data["sign"])
-            logger.info('ret{a}'.format(a=ret))
-            # 如果校验通过
-            if ret:
-                # 开始会话
-                ChatServices.generator()
+            print(ret)
+            # 权限校验
+            if not ret:
+                return json_response(code=RET.ROLEERR, message="权限错误")
+            # 请求类型校验
+            if req_data["query_type"] not in [QueryType.DOC, QueryType.NORMAL, QueryType.LINK, QueryType.REPORT]:
+                return json_response(code=RET.PARAMERR, message="query_type错误")
+            # 如果校验通过开始会话
+            try:
+                response = ChatServices.chat(
+                    req_data["conversation_id"],
+                    req_data["query"],
+                    req_data["conversation_type"],
+                    req_data["stream"]
+                )
+                return compact_response(response)
+            except Exception as e:
+                logger.error(e)
 
             return json_response(code=RET.OK, message="请求成功。")
         except Exception as e:
             logger.error(f"Completion request error: {e}")
             return json_response(code=400, message="请求失败：" + str(e))
+
+
+def compact_response(response) -> Response:
+    if isinstance(response, dict):
+        return Response(response=json.dumps(response, ensure_ascii=False), mimetype="application/json")
+
+    def generate() -> Generator:
+        try:
+            for chunk in response:
+                yield chunk
+        except Exception as e:
+            logger.error(f"compact_response error: {e}")
+
+    return Response(stream_with_context(generate()), status=200, mimetype="text/event-stream")

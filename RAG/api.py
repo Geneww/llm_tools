@@ -9,19 +9,27 @@
 from flask import Flask, Response
 import time
 from flask.wrappers import Response
-from flask_r
+from langchain_community.llms import Ollama
 
 app = Flask(__name__)
 
 
+# Function to handle streaming responses
+def handle_streaming_response(response_stream):
+    for chunk in response_stream:
+        # Process each chunk as it arrives
+        print(chunk, end='')
+        yield chunk
+
+
 def generate_stream():
-    for i in range(10):
-        yield f"data: {i}\n\n"
-        time.sleep(1)  # 模拟数据处理的延迟
+    llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-dpo")
+    response_stream = llm.stream("为什么天空是蓝色的？", temperature=0.5, top_p=0.5, stream=True)
+
+    return handle_streaming_response(response_stream)
 
 
 @app.route('/chat')
-@app.doc()
 def stream():
     return Response(generate_stream(), mimetype='text/event-stream')
 

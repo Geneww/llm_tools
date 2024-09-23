@@ -47,7 +47,7 @@ class AppsManager(db.Model, BaseModel):
         return gen_sign == sign
 
     @staticmethod
-    def init_record(self):
+    def init_record():
         """自动处理"""
         instance = db.session.query(AppsManager).filter_by(app_id="1001").first()
         if not instance:

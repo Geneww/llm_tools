@@ -84,3 +84,31 @@ if __name__ == '__main__':
 
     # 打印北京时间
     print(beijing_time.strftime('%Y-%m-%d %H:%M:%S'))
+
+    import requests
+
+
+    def stream_response(url, params):
+        # 发起请求并设置stream参数为True
+        with requests.get(url, params=params, stream=True) as response:
+            try:
+                response.raise_for_status()  # 检查请求是否成功
+                # 逐块处理响应数据
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:  # 过滤掉keep-alive新块
+                        print(chunk.decode('utf-8'), end='')
+            except requests.exceptions.HTTPError as e:
+                # 处理请求异常
+                print(e)
+
+
+    # 设置请求参数
+    params = {
+        'model': 'llama3-dpo',
+        'prompt': '为什么天空是蓝色的？',
+        'temperature': 0.5,
+        'top_p': 0.5
+    }
+
+    # 调用函数
+    stream_response('http://192.168.124.100:11434/invoke', params)

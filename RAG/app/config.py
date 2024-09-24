@@ -24,7 +24,7 @@ class BaseConfig:
 class DevelopmentConfig(BaseConfig):
     CONFIG_NAME = "development"
     SECRET_KEY = os.getenv(
-        "DEV_SECRET_KEY", "kxkkxkxkxxkxk"
+        "DEV_SECRET_KEY", "abcd"
     )
     DEBUG = True
     # 配置数据库的动态追踪修改

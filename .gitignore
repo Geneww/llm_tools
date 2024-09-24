@@ -1,4 +1,6 @@
 # local files
+RAG/model_files
+RAG/logs
 data/MNIST_data/
 .idea
 vit/__pycache__/

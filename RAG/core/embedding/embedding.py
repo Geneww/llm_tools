@@ -12,10 +12,12 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer
 
+from config import EMBEDDING_MODEL_PATH
+
 
 class Embedding:
     def __init__(self,
-                 model_path='/Users/gene/project/tools/llm_tools/RAG/model_files/nlp_gte_sentence-embedding_chinese-base'
+                 model_path=EMBEDDING_MODEL_PATH
                  ):
         self._tokenizer = AutoTokenizer.from_pretrained(model_path)
         self._model = AutoModel.from_pretrained(model_path, trust_remote_code=True)

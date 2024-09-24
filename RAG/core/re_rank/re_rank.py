@@ -1,14 +1,15 @@
 from typing import List
 
 import torch.nn.functional as F
-
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from config import RERANK_MODEL_PATH
 
 
 class ReRank:
     def __init__(self):
-        self._tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-v2-m3')
-        self._model = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-v2-m3')
+        self._tokenizer = AutoTokenizer.from_pretrained(RERANK_MODEL_PATH)
+        self._model = AutoModelForSequenceClassification.from_pretrained(RERANK_MODEL_PATH)
         self._model.eval()
 
     def rank(self, input_pairs: List[List[str]]) -> list:

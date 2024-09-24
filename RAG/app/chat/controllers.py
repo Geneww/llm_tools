@@ -37,7 +37,7 @@ nonce为 4位数字字符串(1000 - 9999)
 ```
 ---
 ```
-query_type 为聊天类型 -> common: 通用聊天;  document: 专业知识问答; link: 功能定位聊天;
+conversation_type 为会话类型 -> common: 通用聊天;  document: 专业知识问答; link: 链接匹配; report: 报告总结；
 response_mode 为响应类型 -> block: 阻塞式一次性返回;  
 streaming: 流式返回;
 ```
@@ -56,15 +56,15 @@ class Completion(Resource):
             if not ret:
                 return json_response(code=RET.ROLEERR, message="权限错误")
             # 请求类型校验
-            if req_data["query_type"] not in [QueryType.DOC, QueryType.NORMAL, QueryType.LINK, QueryType.REPORT]:
-                return json_response(code=RET.PARAMERR, message="query_type错误")
+            if req_data["conversation_type"] not in [QueryType.DOC, QueryType.NORMAL, QueryType.LINK, QueryType.REPORT]:
+                return json_response(code=RET.PARAMERR, message="conversation_type错误")
             # 如果校验通过开始会话
             try:
                 response = ChatServices.chat(
                     req_data["conversation_id"],
                     req_data["query"],
                     req_data["conversation_type"],
-                    req_data["stream"]
+                    req_data["response_mode"]
                 )
                 return compact_response(response)
             except Exception as e:

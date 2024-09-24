@@ -11,7 +11,7 @@
 class QueryType:
     """大模型类型"""
     DOC = "document"
-    NORMAL = "chat"
+    NORMAL = "common"
     LINK = "link"
     REPORT = "report"
 

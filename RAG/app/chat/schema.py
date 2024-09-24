@@ -16,5 +16,5 @@ class ChatSchema(SignSchema):
 
     conversation_id = fields.String(attribute="conversation_id", required=True)
     query = fields.String(attribute="query", required=True)
-    query_type = fields.String(attribute="query_type", required=True)
+    conversation_type = fields.String(attribute="conversation_type", required=True)
     response_mode = fields.String(attribute="response_mode", required=True)

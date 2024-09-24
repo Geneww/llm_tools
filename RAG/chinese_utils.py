@@ -42,5 +42,6 @@ def sent_tokenize(input_string):
 
 
 if __name__ == '__main__':
-    print(sentence_to_keywords("RAG模型部署源码资料已经打包准备好了"))
+    print(sentence_to_keywords("RAG模型部署源码资料已经打包准备好了。"))
+    print(sentence_to_keywords("RAG模型部署源码资料还没有打包准备好。"))
     print(sent_tokenize("ok, i'm fine, 你在干嘛啊？我在吃饭。"))

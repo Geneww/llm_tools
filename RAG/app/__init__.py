@@ -16,6 +16,7 @@ from app.logger import Loggers
 from flask_jwt_extended import JWTManager
 from flask_apscheduler import APScheduler
 
+
 db = SQLAlchemy()
 logger = Loggers()
 jwt = JWTManager()
@@ -26,6 +27,7 @@ def create_app(env=None):
     from app.config import config_by_name
     from app.routes import register_routes
     # from core.llm.llm_builder import LLMBuilder
+    from models.model import AppsManager
 
     app = Flask(__name__)
     app.config.from_object(config_by_name[env or "dev"])
@@ -75,7 +77,7 @@ sign 签名方式: md5(app_id + nonce + timestamp + secret); nonce为 4位数字
 
     with app.app_context():
         db.create_all()
-    #     AppsManager.init_record()  # 初始化默认应用
+        AppsManager.init_record()  # 初始化默认应用
     #     User.init_admin()  # 初始化管理员账号
     #
     # # 初始化向量数据

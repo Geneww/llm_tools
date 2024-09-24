@@ -51,7 +51,7 @@ class AppsManager(db.Model, BaseModel):
         """自动处理"""
         instance = db.session.query(AppsManager).filter_by(app_id="1001").first()
         if not instance:
-            instance = AppsManager(app_id="1001", app_name="test_app", app_secret="xxx")
+            instance = AppsManager(app_id="1001", app_name="test_app", app_secret="e8da103ca643a420c995952bf2ae255d")
             db.session.add(instance)
             db.session.commit()
         return instance

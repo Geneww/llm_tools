@@ -37,7 +37,8 @@ os.environ["OPENAI_API_KEY"] = "12acdwwww"
 #         return params
 def generate_prompt(prompt):
     messages = [
-        {"role": "system", "content": """You are an expert AI assistant with advanced reasoning capabilities. Your task is to provide detailed, step-by-step explanations of your thought process. For each step:
+        {"role": "system",
+         "content": """You are an expert AI assistant with advanced reasoning capabilities. Your task is to provide detailed, step-by-step explanations of your thought process. For each step:
 
 1. Provide a clear, concise title describing the current reasoning phase.
 2. Elaborate on your thought process in the content section.

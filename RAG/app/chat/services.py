@@ -19,7 +19,7 @@ class ChatServices:
     def chat(cls, conversation_id: str, query: str, conversation_type: str, stream: bool):
         llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-cot")
         # 查询会话id是否存在，不存在就新建
-        conversation = Conversation.query.filter_by(user_conv_id=conversation_id).first()
+        conversation = Conversation.query.filter_by(user_conversation_id=conversation_id).first()
         # 不存在则新建一个id
         if not conversation:
             conversation = Conversation(
@@ -35,7 +35,6 @@ class ChatServices:
                 db.session.rollback()
                 raise e
         # 构建prompt
-
         if stream:
             response = llm.stream("hello!", temperature=0.7, top_p=0.9)
         else:

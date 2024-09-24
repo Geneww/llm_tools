@@ -10,3 +10,4 @@ from langchain.vectorstores import Chroma
 from core.embedding.embedding import Embedding
 
 class ChromaVectorStore:
+    pass

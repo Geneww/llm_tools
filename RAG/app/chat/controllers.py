@@ -21,6 +21,7 @@ from common.schema import custom_accepts
 from common.response import json_response, RET
 from app.chat.schema import ChatSchema, CommResp
 from models.model import AppsManager
+from config import LLM_MODEL_TEMPERATURE, LLM_MODEL_TOP_P
 
 from app import logger
 
@@ -64,20 +65,22 @@ class Completion(Resource):
                     req_data["conversation_id"],
                     req_data["query"],
                     req_data["conversation_type"],
-                    req_data["response_mode"]
+                    req_data["response_mode"] == "stream",
+                    req_data.get("temperature", LLM_MODEL_TEMPERATURE),
+                    req_data.get("top_p", LLM_MODEL_TOP_P)
                 )
                 return compact_response(response)
             except Exception as e:
                 logger.error(e)
 
-            return json_response(code=RET.OK, message="请求成功。")
+            return json_response(code=RET.OK)
         except Exception as e:
             logger.error(f"Completion request error: {e}")
-            return json_response(code=400, message="请求失败：" + str(e))
+            return json_response(code=RET.SERVERERR, message="请求失败：" + str(e))
 
 
 def compact_response(response) -> Response:
-    if isinstance(response, dict):
+    if isinstance(response, str):
         return Response(response=json.dumps(response, ensure_ascii=False), mimetype="application/json")
 
     def generate() -> Generator:

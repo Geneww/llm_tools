@@ -1,6 +1,7 @@
 # local files
 RAG/model_files
 RAG/logs
+RAG/instance
 data/MNIST_data/
 data/MNIST/
 data/cifar-10-batches-py/

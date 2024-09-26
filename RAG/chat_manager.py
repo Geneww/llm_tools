@@ -103,8 +103,8 @@ def test_rag():
 
 
 if __name__ == '__main__':
-    a = extract_text_from_pdf("/Users/gene/Downloads/MakerWorld中国站-创作者答疑.pdf")
-    print(a)
-    # test_rag()
-    docs = text_splitter.split_text(a)
-    print(docs)
+    # a = extract_text_from_pdf("/Users/gene/Downloads/MakerWorld中国站-创作者答疑.pdf")
+    # print(a)
+    test_rag()
+    # docs = text_splitter.split_text(a)
+    # print(docs)

@@ -21,20 +21,22 @@ os.environ["OPENAI_API_BASE"] = "http://192.168.124.100:8000/v1/stream"
 os.environ["OPENAI_API_KEY"] = "12acdwwww"
 
 
-# class StreamableOpenAI(OpenAI):
-#     # @handle_llm_exceptions
-#     def generate(
-#             self,
-#             prompts: List[str],
-#             stop: Optional[List[str]] = None,
-#             callbacks: Callbacks = None,
-#             **kwargs: Any,
-#     ) -> LLMResult:
-#         return super().generate(prompts, stop, callbacks, **kwargs)
-#
-#     @classmethod
-#     def get_kwargs_from_model_params(cls, params: dict):
-#         return params
+class StreamableOpenAI(Ollama):
+    @handle_llm_exceptions
+    def generate(
+            self,
+            prompts: List[str],
+            stop: Optional[List[str]] = None,
+            callbacks: Callbacks = None,
+            **kwargs: Any,
+    ) -> LLMResult:
+        return super().generate(prompts, stop, callbacks, **kwargs)
+
+    @classmethod
+    def get_kwargs_from_model_params(cls, params: dict):
+        return params
+
+
 def generate_prompt(prompt):
     messages = [
         {"role": "system",
@@ -77,14 +79,11 @@ Example of a valid JSON response:
 
 
 if __name__ == '__main__':
-    user_query = """{
-    "title": "Additional Factors: Considering Water Vapor and Ozone",
-    "content": "Although we've looked into the impact of temperature changes on our visual perception, there are additional factors that must be taken into account. The presence and concentration of water vapor in the atmosphere plays a significant role in light absorption and scattering, influencing how colors appear to us. Additionally, ozone present in the upper layers can interact with certain wavelengths of light to affect its transmission through the atmosphere. To accurately understand these effects, we need to examine further how they impact our line of sight.",
-    "next_action": "continue"
-}"""
+    user_query = """why sky blue?"""
     prompt = generate_prompt(user_query)
+    print(prompt)
     # sa = StreamableOpenAI()
     # print(sa.generate(prompts=[user_query]))
-    llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-cot")  # 这里的"llama2"是你本地运行的模型名称
+    llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-simple")  # 这里的"llama2"是你本地运行的模型名称
     response = llm.invoke(user_query)
     print(response)

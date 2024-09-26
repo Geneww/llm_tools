@@ -16,6 +16,12 @@ class QueryType:
     REPORT = "report"
 
 
+class ResponseType:
+    """大模型回复类型"""
+    STREAM = "stream"  # 流式返回
+    BLOCK = "block"  # 一次性返回
+
+
 class ModelItem:
     """模型配置"""
     LLM = "llama3-dpo"

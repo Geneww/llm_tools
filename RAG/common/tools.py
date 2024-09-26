@@ -20,6 +20,35 @@ def generate_secret(length=16):
     return secret_key.hex()
 
 
+def build_prompt(prompt_template, **kwargs):
+    """
+    构建prompt模板
+    :param prompt_template:
+    :param kwargs:
+    :return:
+    """
+    prompt = prompt_template
+    if isinstance(prompt_template, list):
+        content = kwargs.get("query")
+        prompt_template.insert(-1, {"role": "user", "content": content})
+    else:
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                val = v
+            elif isinstance(v, list) and all(isinstance(elem, str) for elem in v):
+                val = '\n'.join(v)
+            else:
+                val = str(v)
+            prompt = prompt_template.replace(f'__{k.upper()}__', val)
+    return prompt
+
+
 if __name__ == '__main__':
     print(generate_uuid())
     print(generate_secret())
+    from config import *
+
+    a = build_prompt(RAG_PROMPT_TEMPLATE, query="why sky blue?")
+    b = build_prompt(PROMPT_TEMPLATE, query="why sky blue?")
+    print(a)
+    print(b)

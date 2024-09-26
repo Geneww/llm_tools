@@ -12,18 +12,22 @@ from langchain_community.llms import Ollama
 
 from .model import Conversation
 from common.constants import ModelItem
+from common.tools import build_prompt
+from config import *
 
 
 class ChatServices:
     @classmethod
-    def chat(cls, conversation_id: str, query: str, conversation_type: str, stream: bool):
-        llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-cot")
+    def chat(cls, conversation_id: str, query: str, conversation_type: str, stream: bool, temperature: float,
+             top_p: float):
+        llm = Ollama(base_url=LLM_MODEL_URL, model=LLM_MODEL)
         # 查询会话id是否存在，不存在就新建
         conversation = Conversation.query.filter_by(user_conversation_id=conversation_id).first()
         # 不存在则新建一个id
         if not conversation:
+            print("not conversation")
             conversation = Conversation(
-                model_name=ModelItem.LLM,
+                model_name=LLM_MODEL,
                 user_conversation_id=conversation_id,
                 conversation_type=conversation_type,
                 summary=""
@@ -33,18 +37,17 @@ class ChatServices:
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
+                logger.error("create new conversation model error.")
                 raise e
         # 构建prompt
+        prompt = build_prompt(PROMPT_TEMPLATE, query=query)
         if stream:
-            response = llm.stream("hello!", temperature=0.7, top_p=0.9)
+            print("stream.")
+            response = llm.stream(prompt, temperature=temperature, top_p=top_p)
         else:
-            response = llm.invoke("hello!", temperature=0.7, top_p=0.9)
+            response = llm.invoke(prompt, temperature=temperature, top_p=top_p)
 
-        prompt = generate_prompt(query)
-        # sa = StreamableOpenAI()
-        # print(sa.generate(prompts=[user_query]))
-        print(response)
-        return {}
+        return response
 
 
 def test(name):

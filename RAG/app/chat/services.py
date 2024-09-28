@@ -25,7 +25,6 @@ class ChatServices:
         conversation = Conversation.query.filter_by(user_conversation_id=conversation_id).first()
         # 不存在则新建一个id
         if not conversation:
-            print("not conversation")
             conversation = Conversation(
                 model_name=LLM_MODEL,
                 user_conversation_id=conversation_id,
@@ -41,8 +40,8 @@ class ChatServices:
                 raise e
         # 构建prompt
         prompt = build_prompt(PROMPT_TEMPLATE, query=query)
+        # 调用LLM大模型
         if stream:
-            print("stream.")
             response = llm.stream(prompt, temperature=temperature, top_p=top_p)
         else:
             response = llm.invoke(prompt, temperature=temperature, top_p=top_p)
@@ -50,13 +49,13 @@ class ChatServices:
         return response
 
 
-def test(name):
-    llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-dpo")
-    response = llm.invoke("为什么天空是蓝色的？", temperature=0.5, top_p=0.5)
-    print(f"id:{name}- {response}")
-
-
 if __name__ == '__main__':
+    def test(name):
+        llm = Ollama(base_url='http://192.168.124.100:11434', model="llama3-dpo")
+        response = llm.invoke("为什么天空是蓝色的？", temperature=0.5, top_p=0.5)
+        print(f"id:{name}- {response}")
+
+
     import threading
 
     for i in range(5):

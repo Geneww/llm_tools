@@ -18,7 +18,7 @@ from flask_accepts import responds, accepts
 
 from common.constants import QueryType
 from common.schema import custom_accepts
-from common.response import json_response, RET
+from common.response import RET, json_response, message_response
 from app.chat.schema import ChatSchema, CommResp
 from models.model import AppsManager
 from config import LLM_MODEL_TEMPERATURE, LLM_MODEL_TOP_P
@@ -81,12 +81,13 @@ class Completion(Resource):
 
 def compact_response(response) -> Response:
     if isinstance(response, str):
-        return Response(response=json.dumps(response, ensure_ascii=False), mimetype="application/json")
+        return Response(response=json.dumps(message_response(code=RET.OK, data=response), ensure_ascii=False), mimetype="application/json")
 
     def generate() -> Generator:
         try:
             for chunk in response:
-                yield chunk
+                yield json.dumps(message_response(code=RET.OK, data=chunk), ensure_ascii=False) + "\n\n"
+                # yield json.dumps(message_response(code=RET.OK, data=chunk), ensure_ascii=False)
         except Exception as e:
             logger.error(f"compact_response error: {e}")
 

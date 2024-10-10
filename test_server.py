@@ -44,4 +44,11 @@ if __name__ == "__main__":
     }
     # 可选：自定义请求头
     headers = {'Authorization': 'Bearer your_token_here'}
-    stream_events(url, data=json.dumps(data))
+    # stream_events(url, data=json.dumps(data))
+
+    import queue
+    import threading
+
+    msg_queue = queue.Queue()
+
+

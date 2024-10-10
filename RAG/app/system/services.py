@@ -6,3 +6,4 @@
 @Time:        09月 13, 2024
 @Description:
 """
+from langchain.vectorstores import FAISS

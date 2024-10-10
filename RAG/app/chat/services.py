@@ -11,7 +11,6 @@ from app import db, logger
 from langchain_community.llms import Ollama
 
 from .model import Conversation
-from common.constants import ModelItem
 from common.tools import build_prompt
 from config import *
 
